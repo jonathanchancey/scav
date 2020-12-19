@@ -9,3 +9,6 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 
+# .\env\Scripts\Activate.ps1
+
+
