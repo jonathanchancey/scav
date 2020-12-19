@@ -1,6 +1,14 @@
 import discord
 import logging
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+TOKEN = os.getenv("SCAV_TOKEN")
+
+# Setup Logging
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 # logger.setLevel(logging.DEBUG)
@@ -9,6 +17,11 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 
-# .\env\Scripts\Activate.ps1
 
+bot = commands.Bot(command_prefix='>')
 
+@bot.command()
+async def ping(ctx):
+    await ctx.send('pong')
+
+bot.run(TOKEN)
