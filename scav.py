@@ -5,6 +5,16 @@ from dotenv import load_dotenv
 import os
 import time
 import pprint as pp
+import random
+
+
+# if not discord.opus.is_loaded():
+#     # the 'opus' library here is opus.dll on windows
+#     # or libopus.so on linux in the current directory
+#     # you should replace this with the location the
+#     # opus library is located in and with the proper filename.
+#     # note that on windows this DLL is automatically provided for you
+#     discord.opus.load_opus('opus')
 
 load_dotenv()
 TOKEN = os.getenv("SCAV_TOKEN")
@@ -43,6 +53,31 @@ async def channels(ctx):
     await ctx.send(formatted_channels)
     print(voice_channel_list)
 
+async def create_voice_client(self, channel):
+        voice = await self.bot.join_voice_channel(channel)
+        state = self.get_voice_state(channel.server)
+        state.voice = voice
+
+# @property
+# def voice_client(self):
+#     r"""Optional[:class:`.VoiceProtocol`]: A shortcut to :attr:`.Guild.voice_client`\, if applicable."""
+#     g = self.guild
+#     return g.voice_client if g else None
+
+# @play.before_invoke
+# @yt.before_invoke
+# @stream.before_invoke
+# async def ensure_voice(self, ctx):
+#     if ctx.voice_client is None:
+#         if ctx.author.voice:
+#             await ctx.author.voice.channel.connect()
+#         else:
+#             await ctx.send("You are not connected to a voice channel.")
+#             raise commands.CommandError("Author not connected to a voice channel.")
+#     elif ctx.voice_client.is_playing():
+#         ctx.voice_client.stop()
+
+
 @bot.command()
 async def scav(ctx):
     # get list of channels
@@ -66,25 +101,103 @@ async def scav(ctx):
     # TODO add category moving support
 
     # select target of connected users 
-    # voice_channel_list
+    connected_users = []
+    voice_channel_list = ctx.guild.voice_channels # list of voice channels
+    for channel in voice_channel_list:
+        # print("{} has {} members ".format(channel.name, channel.voice_states))
+        [connected_users.append(i) for i in iter(channel.voice_states)]
+    await ctx.send(str(connected_users))
+
+    target = random.choice(connected_users)
+    print(target)
+    # target = await ctx.guild.fetch_member(target)
+    target = await ctx.guild.fetch_member(126215814754861056) # temporary override
+    print(target)
+
+    # target = ctx.guild.get_member(target)
+
+    await ctx.send(str(target.name))
+
+    # join created channel
+    
+    voice_client = await channel.connect()
+
+    
+    # get scav and target channel position
+    target_channel = target.voice.channel
+    target_pos = target_channel.position
+    # scav_pos = channel.position - 1
+    scav_pos = 6 # TODO REMOVE OVERRIDE
 
 
-    import ipdb; ipdb.set_trace()
+
+    scav = await ctx.guild.fetch_member(bot.user.id)
+    # import ipdb; ipdb.set_trace()
+    while scav_pos != target_pos:
+        if scav_pos > target_pos:
+            channel = voice_channel_list[scav_pos - 1]
+        else:
+            channel = voice_channel_list[scav_pos + 1]
+        time.sleep(1)
+        print("target pos = {} \n scav pos = {}".format(target_pos,scav_pos))
+        print("joining {}".format(channel.name))
+        try: 
+            await scav.move_to(channel)
+        except:
+            pass
+        
+        # refresh state
+        voice_channel_list = ctx.guild.voice_channels # list of voice channels
+        scav_pos = channel.position
+        target_channel = target.voice.channel
+        target_pos = target_channel.position
+
+
+
+    
+
+    # create channel 
+    temp_channel = await ctx.guild.create_voice_channel(";-;")
+    await temp_channel.edit(position=0)
+    # move target and scav in channel
+    await target.move_to(temp_channel)
+    await scav.move_to(temp_channel)
+
+
+    # state = self.get_voice_state(ctx.message.server)
+    #     if state.voice is None:
+    #         state.voice = await self.bot.join_voice_channel(summoned_channel)
+    #     else:
+    #         await state.voice.move_to(summoned_channel)
+
+    if ctx.voice_client is not None:
+        await ctx.voice_client.move_to(temp_channel)
+
+    
+    # play scav sound
+    source = await discord.FFmpegOpusAudio.from_probe("tarkov-scav-laughing-3.mp3", method='fallback')
+    ctx.voice_client.play(source)
+    time.sleep(3) # TODO find duration of file
+    # delete channel 
+    await temp_channel.delete()
+
+    # # join created channel
+    # await channel.connect()
+    # # get vc id
+    # current_vc_id = channel.id
+    # # find vc id in voice_channel_list
+    # for c in voice_channel_list:
+    #     current_vc_position = 
+    # # find target vc id in voice_channel_list
+    # # calculate if to increment or decrement to get closer
+
+    # import ipdb; ipdb.set_trace()
 
     # await fetch_channel(channel_id)
 
-    time.sleep(5)
+    # time.sleep(5)
     # make sure to clean up when done
     await channel.delete()
-
-
-@bot.command()
-async def voice(ctx):
-    VC = discord.utils.get(ctx.guild.channels, id=705524214270132368)
-    print(VC.members)  # each user is a member object
-    for user in VC.members:
-        # Code here
-        print(user.name)
 
 @bot.command()
 async def lmem(ctx): # list members ids connected to voice channels
